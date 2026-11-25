@@ -5,6 +5,7 @@ Chạy:  python main.py   (mặc định http://localhost:8000)
 import os
 
 from fastapi import Body, FastAPI, Header, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -15,6 +16,14 @@ from rooms import RoomManager
 FRONTEND = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "frontend"))
 
 app = FastAPI(title="Business Tour 3D")
+_cors_origins = [o.strip() for o in os.environ.get("CORS_ORIGINS", "*").split(",") if o.strip()]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=_cors_origins,
+    allow_credentials="*" not in _cors_origins,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 manager = RoomManager()
 
 

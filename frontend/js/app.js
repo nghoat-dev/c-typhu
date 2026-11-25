@@ -4,6 +4,7 @@ import { Scene3D } from './scene3d.js';
 import { Backdrop2D } from './backdrop2d.js';
 import { CHARACTER_DEFS, charDef, renderAvatarDataURL, renderFullBodyDataURL } from './character.js';
 import { sfx, isMuted, setMuted, startBgm, stopBgm, bgmOn } from './audio.js';
+import { getApiUrl, getWsUrl } from './config.js';
 
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => Array.from(document.querySelectorAll(s));
@@ -133,7 +134,7 @@ function send(payload) {
 async function api(url, opts = {}) {
   const headers = { 'Content-Type': 'application/json', ...(opts.headers || {}) };
   if (app.token) headers.Authorization = `Bearer ${app.token}`;
-  const res = await fetch(url, { ...opts, headers });
+  const res = await fetch(getApiUrl(url), { ...opts, headers });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.detail || 'Lỗi yêu cầu');
   return data;
@@ -349,8 +350,7 @@ $('#btn-char-home').onclick = () => { sfx.click(); showScreen('lobby-screen'); }
 function connectWs() {
   if (!app.token) return;
   if (app.ws && (app.ws.readyState === 0 || app.ws.readyState === 1)) return;
-  const proto = location.protocol === 'https:' ? 'wss' : 'ws';
-  const ws = new WebSocket(`${proto}://${location.host}/ws?token=${encodeURIComponent(app.token)}`);
+  const ws = new WebSocket(getWsUrl(app.token));
   app.ws = ws;
 
   ws.onopen = () => { app.reconnectDelay = 800; send({ action: 'LIST_ROOMS' }); };
