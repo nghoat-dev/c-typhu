@@ -1203,6 +1203,9 @@ function openRulesModal() {
 $('#btn-rules').onclick = openRulesModal;
 $('#btn-rules-lobby').onclick = openRulesModal;
 $('#btn-char-rules').onclick = openRulesModal;
+$('#btn-zoom-in').onclick = () => { sfx.click(); app.scene.zoomBy(1.28); };
+$('#btn-zoom-out').onclick = () => { sfx.click(); app.scene.zoomBy(0.78); };
+$('#btn-zoom-reset').onclick = () => { sfx.click(); app.scene.resetCamera(); };
 
 $('#btn-toggle-bgm').onclick = () => { sfx.unlock(); if (bgmOn()) stopBgm(); else startBgm(); $('#btn-toggle-bgm').style.opacity = bgmOn() ? '1' : '0.55'; };
 const syncMuteBtn = () => { $('#btn-toggle-mute').textContent = isMuted() ? '🔇' : '🔊'; };

@@ -296,9 +296,12 @@ export class Scene3D {
     this.controls.enableDamping = true;
     this.controls.dampingFactor = 0.08;
     this.controls.enableRotate = false;
-    this.controls.enablePan = false;
-    this.controls.minZoom = 0.85;
-    this.controls.maxZoom = 1.65;
+    this.controls.enablePan = true;
+    this.controls.screenSpacePanning = true;
+    this.controls.zoomSpeed = 1.15;
+    this.controls.minZoom = 0.75;
+    this.controls.maxZoom = 3.0;
+    this.baseTargetY = -0.25;
 
     this.attractMode = false;
     this.matchGroup = new THREE.Group();
@@ -341,8 +344,8 @@ export class Scene3D {
 
     // Góc nhìn Isometric trực giao chuẩn (~33.5°), giữ trọn 4 góc bàn cờ & khoảng thở trên/dưới rộng rãi
     const dir = new THREE.Vector3(1, 0.936, 1).normalize();
-    const targetY = w < 760 ? -0.45 : -0.25;
-    this.controls.target.set(0, targetY, 0);
+    this.baseTargetY = w < 760 ? -0.45 : -0.25;
+    this.controls.target.y = this.baseTargetY;
     this.camera.position.copy(dir.multiplyScalar(54)).add(this.controls.target);
 
     const reqW = w < 760 ? 24.6 : 26.8;
@@ -442,9 +445,37 @@ export class Scene3D {
     if (this.biome?.setDiceBadge) this.biome.setDiceBadge(val);
   }
 
+  setZoom(targetZoom) {
+    const z = Math.max(this.controls.minZoom, Math.min(this.controls.maxZoom, targetZoom));
+    gsap.killTweensOf(this.camera, 'zoom');
+    gsap.to(this.camera, {
+      zoom: z,
+      duration: 0.22,
+      ease: 'power2.out',
+      onUpdate: () => this.camera.updateProjectionMatrix(),
+    });
+  }
+
+  zoomBy(factor) {
+    this.setZoom(this.camera.zoom * factor);
+  }
+
   resetCamera() {
-    this.camera.zoom = 1;
-    this.updateResponsiveCamera();
+    gsap.killTweensOf(this.camera, 'zoom');
+    gsap.killTweensOf(this.controls.target);
+    gsap.to(this.camera, {
+      zoom: 1,
+      duration: 0.25,
+      ease: 'power2.out',
+      onUpdate: () => this.camera.updateProjectionMatrix(),
+    });
+    gsap.to(this.controls.target, {
+      x: 0,
+      y: this.baseTargetY,
+      z: 0,
+      duration: 0.25,
+      ease: 'power2.out',
+    });
   }
 
   _buildBoardFrame() {
@@ -1034,6 +1065,9 @@ export class Scene3D {
     }
 
     this.controls.update();
+    this.controls.target.x = Math.max(-8.5, Math.min(8.5, this.controls.target.x));
+    this.controls.target.z = Math.max(-8.5, Math.min(8.5, this.controls.target.z));
+    this.controls.target.y = this.baseTargetY;
     this.renderer.render(this.scene, this.camera);
   }
 }
