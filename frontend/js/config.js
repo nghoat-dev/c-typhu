@@ -2,7 +2,7 @@
 // Khi chạy chung với backend (localhost / Docker), để mặc định rỗng ''.
 // Khi deploy frontend lên Vercel, điền URL backend (ví dụ: 'https://your-app.onrender.com')
 // hoặc truyền qua query ?backend=https://... (tự lưu vào localStorage).
-export const DEFAULT_BACKEND_URL = '';
+export const DEFAULT_BACKEND_URL = 'https://c-typhu.onrender.com';
 
 export function getBackendUrl() {
   const params = new URLSearchParams(location.search);
