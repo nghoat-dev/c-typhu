@@ -91,38 +91,39 @@ function makeSidewalkGrooveTexture(maxAniso) {
 }
 
 // Nhãn tên 4 ô góc chữ trắng viền xám đen sắc nét, dễ đọc
-function makeCornerLabelSprite(text, scaleW = 3.1) {
+function makeCornerLabelSprite(text, scaleW = 3.2) {
   const c = document.createElement('canvas');
-  c.width = 896; c.height = 224;
+  c.width = 1024; c.height = 256;
   const g = c.getContext('2d');
   g.textAlign = 'center'; g.textBaseline = 'middle';
-  g.font = "900 50px 'Segoe UI', Arial, sans-serif";
+  g.font = "900 58px 'Segoe UI', Arial, sans-serif";
   const words = text.split(' ');
   const lines = [];
   let line = '';
   for (const w of words) {
     const test = line ? `${line} ${w}` : w;
-    if (g.measureText(test).width > 780 && line) { lines.push(line); line = w; }
+    if (g.measureText(test).width > 900 && line) { lines.push(line); line = w; }
     else line = test;
   }
   if (line) lines.push(line);
-  const lh = 56;
-  const sy = 112 - ((lines.length - 1) * lh) / 2;
+  const lh = 64;
+  const sy = 128 - ((lines.length - 1) * lh) / 2;
   lines.forEach((l, i) => {
-    g.shadowColor = 'rgba(0,0,0,0.42)';
-    g.shadowBlur = 8;
-    g.shadowOffsetY = 3;
-    g.strokeStyle = '#1e2026';
-    g.lineWidth = 12;
+    g.shadowColor = 'rgba(0,0,0,0.48)';
+    g.shadowBlur = 10;
+    g.shadowOffsetY = 4;
+    g.strokeStyle = '#16181f';
+    g.lineWidth = 14;
     g.lineJoin = 'round';
-    g.strokeText(l, 448, sy + i * lh);
+    g.strokeText(l, 512, sy + i * lh);
     g.shadowBlur = 0; g.shadowOffsetY = 0;
     g.fillStyle = '#ffffff';
-    g.fillText(l, 448, sy + i * lh);
+    g.fillText(l, 512, sy + i * lh);
   });
   const tex = new THREE.CanvasTexture(c);
   tex.colorSpace = THREE.SRGBColorSpace;
   tex.minFilter = THREE.LinearFilter;
+  tex.magFilter = THREE.LinearFilter;
   const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false, depthTest: false });
   const sp = new THREE.Sprite(mat);
   sp.scale.set(scaleW, scaleW * 0.25, 1);
@@ -500,11 +501,12 @@ export class Scene3D {
       this.tileMeshes.push(bevelMesh);
 
       const topCanvas = document.createElement('canvas');
-      topCanvas.width = 512;
-      topCanvas.height = 512;
+      topCanvas.width = 1024;
+      topCanvas.height = 1024;
       const topTex = new THREE.CanvasTexture(topCanvas);
       topTex.colorSpace = THREE.SRGBColorSpace;
       topTex.minFilter = THREE.LinearMipmapLinearFilter;
+      topTex.magFilter = THREE.LinearFilter;
       topTex.anisotropy = this.maxAniso;
 
       // Mặt trên 32 ô cờ ở y = 0.021
@@ -555,9 +557,24 @@ export class Scene3D {
 
   _drawTileFace(tv, ts, owner) {
     const ctx = tv.canvas.getContext('2d');
-    const W = tv.canvas.width, H = tv.canvas.height;
+    ctx.setTransform(2, 0, 0, 2, 0, 0);
+    const W = 512, H = 512;
     const t = tv.tile;
     const flip180 = tv.idx >= 9 && tv.idx <= 23;
+    const drawCrispText = (txt, x, y, maxW = W - 28, fontSize = 56) => {
+      let sz = fontSize;
+      ctx.font = `800 ${sz}px 'Segoe UI', Arial, sans-serif`;
+      while (sz > 38 && ctx.measureText(txt).width > maxW) {
+        sz -= 2;
+        ctx.font = `800 ${sz}px 'Segoe UI', Arial, sans-serif`;
+      }
+      ctx.lineJoin = 'round';
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+      ctx.lineWidth = 7;
+      ctx.strokeText(txt, x, y);
+      ctx.fillStyle = '#14171f';
+      ctx.fillText(txt, x, y);
+    };
 
     // 1. 4 Ô Góc
     if (tv.tr.corner) {
@@ -622,26 +639,25 @@ export class Scene3D {
         ctx.fillRect(4, H - 32, W - 8, 28);
       }
 
-      // Tên thành phố chính giữa dải 65% pastel: font bold 52px, màu #222222
+      // Tên thành phố chính giữa dải 65% pastel: chữ đậm, viền sáng sắc nét
       ctx.save();
       ctx.translate(W / 2, splitY * 0.5);
       if (flip180) ctx.rotate(Math.PI);
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillStyle = '#222222';
-      ctx.font = "bold 52px 'Segoe UI', Arial, sans-serif";
+      ctx.font = "800 56px 'Segoe UI', Arial, sans-serif";
       const words = t.name.split(' ');
       const lines = [];
       let line = '';
       for (const w of words) {
         const test = line ? `${line} ${w}` : w;
-        if (ctx.measureText(test).width > W - 36 && line) { lines.push(line); line = w; }
+        if (ctx.measureText(test).width > W - 32 && line) { lines.push(line); line = w; }
         else line = test;
       }
       if (line) lines.push(line);
-      const lh = 58;
+      const lh = 62;
       const sy = -((lines.length - 1) * lh) / 2;
-      lines.forEach((l, i) => ctx.fillText(l, 0, sy + i * lh));
+      lines.forEach((l, i) => drawCrispText(l, 0, sy + i * lh, W - 26, 56));
       ctx.restore();
     } else if (t.type === 'CHANCE' || t.type === 'TAX') {
       // 3. Ô Cơ Hội / Thuế: Nền trắng kem sáng #f6f3ef + rãnh #b8b2ac dày 4px
@@ -654,12 +670,9 @@ export class Scene3D {
       ctx.save();
       ctx.translate(W / 2, H / 2);
       if (flip180) ctx.rotate(Math.PI);
-      // Vòng tròn cầu vồng 8 múi to rõ chiếm ~55% chiều rộng ô (282px)
-      drawLandmark(ctx, t.idx, 0, -48, 312);
-      ctx.fillStyle = '#222222';
+      drawLandmark(ctx, t.idx, 0, -48, 324);
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.font = "bold 52px 'Segoe UI', Arial, sans-serif";
-      ctx.fillText(t.type === 'CHANCE' ? 'Cơ hội' : 'Thuế', 0, 152);
+      drawCrispText(t.type === 'CHANCE' ? 'Cơ hội' : 'Thuế', 0, 156, W - 28, 58);
       ctx.restore();
     } else {
       // 4. Ô Bãi Biển / Resort
@@ -681,30 +694,32 @@ export class Scene3D {
       ctx.save();
       ctx.translate(W / 2, H * 0.36);
       if (flip180) ctx.rotate(Math.PI);
-      drawLandmark(ctx, t.idx, 0, -52, 165);
-      ctx.fillStyle = '#222222';
+      drawLandmark(ctx, t.idx, 0, -56, 224);
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.font = "bold 52px 'Segoe UI', Arial, sans-serif";
-      ctx.fillText(t.name, 0, 62);
+      drawCrispText(t.name, 0, 68, W - 24, 56);
       ctx.restore();
     }
 
     if (ts && ts.festival) {
       ctx.save();
-      ctx.translate(W - 64, 34);
+      ctx.translate(W - 72, 38);
       if (flip180) ctx.rotate(Math.PI);
       ctx.fillStyle = '#e11d48';
-      ctx.beginPath(); ctx.roundRect(-48, -18, 96, 36, 12); ctx.fill();
-      ctx.fillStyle = '#ffffff'; ctx.font = '800 22px sans-serif';
+      ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.roundRect(-56, -22, 112, 44, 14); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = '#ffffff'; ctx.font = '900 28px sans-serif';
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ctx.fillText('🎪 x2', 0, 1);
       ctx.restore();
     }
     if (ts && ts.blackout > 0) {
-      ctx.fillStyle = 'rgba(34, 34, 34, 0.45)';
+      ctx.fillStyle = 'rgba(20, 23, 31, 0.5)';
       ctx.fillRect(0, 0, W, H);
-      ctx.font = '104px system-ui, sans-serif';
+      ctx.font = '120px system-ui, sans-serif';
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.strokeStyle = '#14171f'; ctx.lineWidth = 8;
+      ctx.strokeText('⚡', W / 2, H / 2);
+      ctx.fillStyle = '#fde047';
       ctx.fillText('⚡', W / 2, H / 2);
     }
     tv.tex.needsUpdate = true;
