@@ -1,0 +1,14 @@
+services:
+  web:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+      - BT_SECRET=${BT_SECRET:-change-me-in-production}
+    volumes:
+      - bt_data:/app/backend
+    restart: unless-stopped
+
+volumes:
+  bt_data:

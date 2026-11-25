@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Business Tour — Cờ Tỷ Phú 3D</title>
+  <link rel="stylesheet" href="/css/hud.css" />
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "/vendor/three/build/three.module.js",
+      "three/addons/": "/vendor/three/addons/",
+      "cannon-es": "/vendor/cannon-es/cannon-es.js",
+      "gsap": "/vendor/gsap/index.js"
+    }
+  }
+  </script>
+</head>
+<body>
+  <canvas id="bg-2d-canvas"></canvas>
+  <canvas id="scene-canvas"></canvas>
+  <canvas id="fx-confetti-canvas"></canvas>
+  <div id="floating-layer"></div>
+  <div id="toast-container"></div>
+
+  <!-- MÀN HÌNH ĐĂNG NHẬP -->
+  <section id="auth-screen" class="screen active">
+    <div class="auth-card paper-panel">
+      <div class="bt-ribbon">BUSINESS TOUR</div>
+      <p class="auth-sub">Cờ Tỷ Phú 32 ô chuẩn quốc tế • Đấu Trực Tuyến &amp; AI Chiến Thuật</p>
+      <div class="auth-actions">
+        <button id="btn-guest" class="btn btn-sky btn-lg">
+          <span>🎲</span> CHƠI NGAY (KHÁCH)
+        </button>
+        <div class="auth-divider"><span>hoặc đăng nhập để lưu hồ sơ</span></div>
+        <div class="social-row">
+          <button id="btn-google" class="btn btn-social btn-google"><b>G</b> Google</button>
+          <button id="btn-facebook" class="btn btn-social btn-fb"><b>f</b> Facebook</button>
+        </div>
+      </div>
+      <div class="feature-pills">
+        <span>☀️ Bàn cờ 3D Isometric</span>
+        <span>🧑 4 Nhân vật đặc trưng</span>
+        <span>🤖 AI Dễ / TB / Khó</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- MÀN HÌNH SẢNH CHÍNH (LOBBY) -->
+  <section id="lobby-screen" class="screen">
+    <header class="bt-top-header">
+      <div class="header-left">
+        <div class="profile-card">
+          <div class="profile-ava-wrap"><img id="user-avatar-img" src="" alt="" /></div>
+          <div class="profile-meta">
+            <div class="profile-green-bar">
+              <span id="user-name-display">Khách</span>
+              <button id="btn-edit-name" class="mini-edit-btn" title="Đổi tên">✏️</button>
+            </div>
+            <div class="profile-sub-row">
+              <span id="user-provider-badge" class="user-provider">Khách</span>
+              <button id="btn-link-social" class="btn-link-mini hidden">Liên kết</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bt-ribbon">BUSINESS TOUR</div>
+
+      <div class="header-right">
+        <button id="btn-open-chars" class="bt-circle-btn" title="Nhân vật">👤</button>
+        <button id="btn-leaderboard" class="bt-circle-btn" title="Xếp hạng">🏆</button>
+        <button id="btn-history" class="bt-circle-btn" title="Lịch sử đấu">📜</button>
+        <button id="btn-rules-lobby" class="bt-circle-btn" title="Luật chơi">❓</button>
+        <button id="btn-logout" class="bt-circle-btn danger" title="Đăng xuất">✕</button>
+      </div>
+    </header>
+
+    <div class="lobby-grid">
+      <div class="lobby-card paper-panel">
+        <div class="card-header">
+          <h2>🤖 Đấu Với Máy (Solo vs AI)</h2>
+          <span class="tag tag-green">Vào ngay</span>
+        </div>
+        <p class="card-desc">Chọn 1 đến 3 AI Bot cùng 4 nhân vật đặc trưng của Business Tour.</p>
+        <div class="bot-count-row">
+          <span>Số lượng Bot:</span>
+          <div class="seg-group" id="solo-bot-count">
+            <button data-n="1" class="seg active">1 Bot</button>
+            <button data-n="2" class="seg">2 Bot</button>
+            <button data-n="3" class="seg">3 Bot</button>
+          </div>
+        </div>
+        <div id="solo-bot-configs" class="bot-configs"></div>
+        <button id="btn-start-solo" class="btn btn-sky btn-lg full">
+          ⚔️ BẮT ĐẦU ĐẤU MÁY NGAY
+        </button>
+      </div>
+
+      <div class="lobby-card paper-panel">
+        <div class="card-header">
+          <h2>🌐 Đấu Trực Tuyến (PvP)</h2>
+          <span class="tag tag-blue">2–4 Người</span>
+        </div>
+        <p class="card-desc">Ghép nhanh, tạo phòng riêng mời bạn bè hoặc vào phòng công khai.</p>
+        <div class="pvp-actions">
+          <button id="btn-quick-match" class="btn btn-amber">⚡ Ghép Nhanh</button>
+          <button id="btn-create-private" class="btn btn-soft">🔒 Phòng Riêng</button>
+          <button id="btn-create-public" class="btn btn-soft">🌍 Công Khai</button>
+        </div>
+        <div class="join-code-row">
+          <input id="input-room-code" type="text" maxlength="6" placeholder="Nhập mã phòng (VD: AB12CD)" />
+          <button id="btn-join-code" class="btn btn-sky">Vào Phòng</button>
+        </div>
+        <div class="public-rooms-box">
+          <div class="pub-header">
+            <span>Phòng công khai đang chờ</span>
+            <button id="btn-refresh-rooms" class="btn btn-soft btn-xs">🔄 Làm mới</button>
+          </div>
+          <div id="public-rooms-list" class="pub-list"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MÀN HÌNH NHÂN VẬT (ĐÚNG BỐ CỤC ẢNH MẪU 2) -->
+  <section id="character-screen" class="screen">
+    <header class="bt-top-header">
+      <div class="header-left">
+        <button id="btn-char-home" class="bt-circle-btn" title="Về sảnh">🏠</button>
+        <div class="profile-card compact">
+          <div class="profile-ava-wrap"><img id="char-user-ava" src="" alt="" /></div>
+          <div class="profile-meta">
+            <div class="profile-green-bar"><span id="char-user-name">Người chơi</span></div>
+            <div class="profile-sub-row"><span id="char-selected-label" class="user-provider">Đang chọn</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bt-ribbon">NHÂN VẬT</div>
+
+      <div class="header-right">
+        <button id="btn-char-rules" class="bt-circle-btn" title="Luật chơi">❓</button>
+        <button id="btn-close-chars" class="bt-circle-btn danger" title="Quay lại">✕</button>
+      </div>
+    </header>
+
+    <div class="char-layout">
+      <div class="char-col-left">
+        <div class="char-section-bar">NHÂN VẬT CHO TRÒ CHƠI</div>
+        <div id="char-selected-grid" class="char-selected-grid"></div>
+      </div>
+      <div class="char-col-right">
+        <div class="char-section-bar">TẤT CẢ NHÂN VẬT</div>
+        <div id="char-all-grid" class="char-all-grid"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MÀN HÌNH PHÒNG CHỜ (ROOM) -->
+  <section id="room-screen" class="screen">
+    <div class="room-panel paper-panel">
+      <div class="room-head">
+        <div>
+          <div class="room-label">Mã phòng mời</div>
+          <div class="room-code-wrap">
+            <span id="room-code-text" class="room-code">------</span>
+            <button id="btn-copy-code" class="btn btn-soft btn-xs">📋 Sao chép</button>
+          </div>
+        </div>
+        <div class="room-right-head">
+          <label class="toggle-chip">
+            <input type="checkbox" id="chk-room-public" />
+            <span>Công khai</span>
+          </label>
+          <button id="btn-leave-room" class="btn btn-pink btn-sm">Rời phòng</button>
+        </div>
+      </div>
+
+      <div id="room-seats" class="seats-grid"></div>
+
+      <div class="room-footer">
+        <div class="room-controls-left">
+          <button id="btn-pick-char-room" class="btn btn-soft">👤 Chọn nhân vật</button>
+          <div id="host-bot-add" class="host-only">
+            <select id="select-add-bot-diff">
+              <option value="EASY">Bot Dễ</option>
+              <option value="MEDIUM" selected>Bot Trung bình</option>
+              <option value="HARD">Bot Khó</option>
+            </select>
+            <button id="btn-add-bot" class="btn btn-amber">+ Thêm Bot</button>
+          </div>
+        </div>
+        <button id="btn-start-game" class="btn btn-sky btn-lg host-only">🚀 BẮT ĐẦU TRẬN ĐẤU</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- MÀN HÌNH TRONG TRẬN (BUSINESS TOUR HUD) -->
+  <section id="hud-screen" class="screen hud-overlay">
+    <div class="top-left-tools">
+      <button id="btn-exit-match" class="bt-circle-btn sm" title="Về sảnh chính">🏠</button>
+      <button id="btn-toggle-mute" class="bt-circle-btn sm" title="Âm thanh">🔊</button>
+      <button id="btn-toggle-bgm" class="bt-circle-btn sm" title="Nhạc nền">🎵</button>
+    </div>
+
+    <div id="match-timer" class="match-timer hidden">⏱️ 30:00</div>
+
+    <div class="top-right-tools">
+      <button id="btn-resume-control" class="btn btn-amber btn-xs hidden">🙋 Giành quyền</button>
+      <button id="btn-rules" class="bt-circle-btn sm" title="Luật chơi">❓</button>
+      <button id="btn-exit-match-2" class="bt-circle-btn sm danger" title="Thoát trận">✕</button>
+    </div>
+
+    <!-- 4 Góc: Người chơi chính ở góc dưới bên phải (corner-br) -->
+    <div id="player-cards" class="player-corners"></div>
+
+    <!-- Giữa đáy sân đấu: Cụm Công cụ xúc xắc + Tiền hiện có + Nút ĐỔ XÚC XẮC -->
+    <div id="action-bar" class="bottom-action-zone hidden"></div>
+
+    <!-- Hộp thoại Mua / Xây nhà / Buyout / Chọn ô / Thanh lý -->
+    <div id="decision-modal" class="decision-modal paper-panel hidden"></div>
+
+    <!-- Huy hiệu kết quả xúc xắc -->
+    <div id="dice-result-banner" class="dice-result-banner hidden"></div>
+
+    <!-- Popup THẺ CƠ HỘI -->
+    <div id="chance-popup" class="chance-backdrop hidden"></div>
+
+    <!-- Hiệu ứng chúc mừng World Cup -->
+    <div id="worldcup-overlay" class="worldcup-overlay hidden"></div>
+  </section>
+
+  <!-- MODAL CHUNG -->
+  <div id="modal-backdrop" class="modal-backdrop hidden">
+    <div id="modal-box" class="modal-box paper-panel"></div>
+  </div>
+
+  <script type="module" src="/js/app.js"></script>
+</body>
+</html>
